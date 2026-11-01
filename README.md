@@ -21,8 +21,13 @@ The application provides an interactive review queue, class scores, review budge
 | Accuracy | 84.0656% |
 | Macro-F1 | 0.8335173 |
 | Prediction–reference disagreements | 544 |
-| Disagreements found in the top 342 images (10%) | 194 |
-| Random mean at the same review budget | 54.281 |
+
+| Review budget | Images reviewed | Disagreements found | Random mean | Disagreements outside the selection |
+| --- | ---: | ---: | ---: | ---: |
+| 5% | 171 | 111 | 26.986 | 433 |
+| 10% | 342 | 194 | 54.281 | 350 |
+| 20% | 683 | 334 | 108.637 | 210 |
+| 40% | 1,366 | 479 | 217.664 | 65 |
 
 The 10% review queue finds approximately **3.57 times as many disagreements** as the random mean. It captures 194 of 544 disagreements; 350 remain outside that selection. This is an internal, retrospective dataset evaluation. Patient-independent separation, external-hospital performance and clinical benefit have not been established. See the [technical note](TECHNICAL_NOTE.md) for the complete method and limitations.
 
@@ -50,7 +55,7 @@ python -m pip install -r science/requirements.txt
 python -B science/verify_results.py --collection both
 ```
 
-This recalculates metrics, ranking, review budgets and random comparisons from the saved class scores. It **does not retrain the model or reproduce image inference**. The original scientific files and prediction data are preserved byte for byte. [Verification details](science/README.md).
+This recalculates metrics, ranking, review budgets and random comparisons from the saved class scores. It **does not retrain the model or reproduce image inference**. The original evaluation code and saved prediction data are preserved byte for byte. [Verification details](science/README.md).
 
 ## Repository layout
 

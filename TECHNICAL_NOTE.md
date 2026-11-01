@@ -63,4 +63,4 @@ The application reads precomputed image-level predictions and experiment summari
 
 Scores are uncalibrated. Disagreements are relative to dataset labels rather than adjudicated clinical errors. No external-hospital, patient-independent, prospective or human reviewer validation has been established, and time savings were not measured. A method revised after inspecting this test would require a new evaluation not used for selection.
 
-[Project overview](README.md) · [Data notice](DATA_NOTICE.md) · [Open demo](index.html)
+[Project overview](README.md) · [Data notice](DATA_NOTICE.md) · [Open demo](https://huggingface.co/spaces/Dwagga/cellreview)
