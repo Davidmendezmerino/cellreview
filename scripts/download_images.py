@@ -5,11 +5,35 @@ import argparse
 import hashlib
 import json
 import tempfile
+import time
+import urllib.error
 import urllib.request
 
 REVISION = "53ee806db8538411e18d6bd1ed7c1cf5ed4e72ba"
 BASE_URL = f"https://huggingface.co/spaces/Dwagga/cellreview/resolve/{REVISION}/"
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def open_source(request):
+    for attempt in range(6):
+        try:
+            return urllib.request.urlopen(request, timeout=90)
+        except urllib.error.HTTPError as error:
+            if attempt == 5 or error.code not in (429, 500, 502, 503, 504):
+                raise
+            delay = min(30, 2 ** (attempt + 1))
+            if error.code == 429:
+                delay = 60
+                for field in error.headers.get("RateLimit", "").split(";"):
+                    key, _, value = field.strip().partition("=")
+                    if key == "t" and value.isdigit():
+                        delay = int(value) + 1
+                retry_after = error.headers.get("Retry-After", "")
+                if retry_after.isdigit():
+                    delay = max(delay, int(retry_after) + 1)
+            error.close()
+            print(f"Hugging Face HTTP {error.code}; retrying in {delay}s.", flush=True)
+            time.sleep(delay)
 
 
 def download(entry):
@@ -28,7 +52,7 @@ def download(entry):
     size = 0
     with tempfile.NamedTemporaryFile(dir=destination.parent, suffix=".part", delete=False) as output:
         temporary = Path(output.name)
-        with urllib.request.urlopen(request, timeout=90) as response:
+        with open_source(request) as response:
             while chunk := response.read(1024 * 1024):
                 output.write(chunk)
                 digest.update(chunk)
@@ -55,8 +79,19 @@ def main():
         entries = entries[:args.limit]
     if not entries:
         raise ValueError("No images found in the original manifest")
+    # Prepare folders before concurrent downloads. On Windows, resolving a
+    # missing path while another thread creates its parents can be transient.
+    for relative, _ in entries:
+        destination = (ROOT / relative).resolve()
+        if not destination.is_relative_to(ROOT):
+            raise ValueError(f"Path leaves repository: {relative}")
+        destination.parent.mkdir(parents=True, exist_ok=True)
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        downloaded = sum(pool.map(download, entries))
+        downloaded = 0
+        for index, changed in enumerate(pool.map(download, entries), start=1):
+            downloaded += changed
+            if index % 100 == 0:
+                print(f"Verified {index}/{len(entries)} images...", flush=True)
     print(f"Verified {len(entries)} images; downloaded {downloaded}; reused {len(entries) - downloaded}.")
 
 
