@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore a retrospective uncertainty-prioritized review experiment on public peripheral blood cell images. Saved predictions, transparent results and an internal final test.">
+  <meta name="referrer" content="no-referrer">
+  <title>CellReview · Blood cell review</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./app.css?v=20260915-simple"><script src="./app.js?v=20260915-wording" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a href="#review" class="brand" aria-label="CellReview, home"><span class="brand-mark" aria-hidden="true"><i></i></span>CellReview</a>
+    <nav aria-label="Sections"><a href="#review" data-view="review">Review</a><a href="#results" data-view="results">Results</a><a href="#method" data-view="method">Method</a></nav>
+  </header>
+  <div id="loading" class="loading" role="status">Checking the collection and its saved results…</div>
+  <noscript><p class="loading">CellReview needs JavaScript to verify and display its saved files. No model runs in the browser.</p></noscript>
+  <div id="fatal-error" class="fatal-error" role="alert" hidden><strong>We cannot display this collection.</strong><p id="fatal-detail"></p><p class="small">The published files could not be loaded or verified. Reload to retry; no substitute results are shown.</p><button id="retry" class="button secondary">Reload demo</button></div>
+  <main id="main" tabindex="-1" hidden>
+    <section id="intro-panel" class="intro-panel" aria-labelledby="intro-title">
+      <div><h2 id="intro-title">Blood cell review</h2><p class="project-byline">David Méndez Merino</p><p>CellReview shows the blood cell images with the most uncertain predictions first. Using saved predictions and known dataset labels, this experiment tests whether that order finds more disagreements between predictions and labels than reviewing the same number of images at random.</p><p class="tiny muted">Research prototype · No clinical validation</p><div class="intro-actions"><button id="start-review" class="button primary">Review an image</button><a class="text-link" href="#results">Results</a></div></div>
+      <div class="intro-evidence" aria-labelledby="intro-result-scope"><p class="summary-label" id="intro-result-scope"></p><p class="intro-result"><strong id="intro-found"></strong> disagreements found</p><p>versus <strong id="intro-random"></strong> on average at random.</p><p class="tiny muted" id="intro-result-context"></p></div>
+    </section>
+    <section id="view-review" class="view" aria-labelledby="review-heading">
+      <div class="page-heading"><div><h1 id="review-heading" tabindex="-1">Review queue</h1><p class="lead">Highest uncertainty first.</p></div></div>
+      <div class="workspace">
+        <aside class="collection-panel">
+          <h2>Final test</h2><p class="muted small">PBC · <span id="collection-count"></span> images · 8 categories</p>
+          <label class="field-label" for="budget">How many will you review?</label><select id="budget"></select>
+          <div class="session-progress"><div><span>Your progress</span><strong id="progress-count">0</strong></div><progress id="progress" value="0" max="1"></progress><p class="tiny muted">Marked as reviewed in this browser.</p></div>
+          <div id="complete-note" class="complete-note" hidden>You have completed this selection. Explore a larger budget or read the results.</div>
+          <div class="queue-heading"><h3>Priority queue</h3><span id="queue-window" class="tiny muted"></span></div>
+          <div id="queue" class="queue" aria-label="Images in the priority queue"></div>
+          <p class="tiny muted queue-explainer">Highest entropy first. The reference label does not determine the order.</p>
+          <form id="jump-form" class="jump-slot"><label for="jump-position">Go to position</label><input id="jump-position" type="number" min="1" value="1" required><button type="submit" class="button secondary">Go</button></form>
+        </aside>
+        <div class="review-main">
+          <div class="image-panel">
+            <div class="image-toolbar"><span class="image-number" id="image-number" tabindex="-1"></span><div class="zoom-control" aria-label="Image zoom"><button id="zoom-out" aria-label="View the full image" aria-pressed="true">1×</button><button id="zoom-in" aria-label="Zoom to twice the image size" aria-pressed="false">2×</button></div></div>
+            <div class="image-stage"><img id="cell-image" alt="Cell image from the PBC collection" draggable="false" hidden><div id="image-loading" class="image-loading" role="status">Verifying original image…</div><div id="image-error" class="image-error" role="alert" hidden>The original image could not be verified.</div><span class="image-caption">Light microscopy · May-Grünwald-Giemsa</span></div>
+            <div class="image-footer"><span id="image-id" class="mono"></span><span id="reviewed-badge" class="reviewed-badge" hidden>✓ Reviewed</span></div>
+          </div>
+          <div class="review-navigation"><button id="previous" class="button secondary"><span aria-hidden="true">←</span> Previous</button><button id="mark-reviewed" class="button primary">Mark reviewed <span aria-hidden="true">✓</span></button><button id="next" class="button secondary">Next <span aria-hidden="true">→</span></button></div>
+          <p class="tiny muted keyboard-tip">Use ← and → to browse. Progress stays in this browser and never changes labels.</p>
+        </div>
+        <aside class="prediction-panel">
+          <p class="panel-label">Model prediction</p><h2 id="prediction-label"></h2>
+          <div class="uncertainty-box"><div><span>Uncertainty</span><strong id="uncertainty"></strong></div><div class="uncertainty-track"><span id="uncertainty-fill"></span></div><p class="tiny">Entropy from 0 to 1. Higher values mean scores are more spread out.</p></div>
+          <h3 class="scores-heading">Scores by category</h3><div id="scores" class="scores"></div><p class="tiny muted">Scores sum to 1 before rounding to three decimals. They are not calibrated probabilities of being correct.</p>
+          <div class="reference-panel"><p class="panel-label">Dataset reference</p><button id="reveal" class="button secondary full" aria-expanded="false" aria-controls="reference-result">Reveal reference</button><div id="reference-result" hidden><p class="tiny muted">Original dataset label</p><strong id="reference-label"></strong><p id="agreement" class="agreement"></p><p id="source-filename" class="mono tiny"></p><p class="tiny muted">This comparison shows agreement or disagreement; it does not establish clinical truth.</p></div></div>
+        </aside>
+      </div>
+    </section>
+    <section id="view-results" class="view" aria-labelledby="results-heading" hidden>
+      <div class="page-heading"><div><h1 id="results-heading" tabindex="-1">Classification and review results</h1><p class="lead">Held-out test results, evaluated after fixing the method. The data still come from a single source.</p></div><span class="result-status" id="result-status">Internal final test</span></div>
+      <div id="metrics-cards" class="metrics-grid"></div>
+      <div class="results-columns"><section class="panel"><div class="section-heading"><div><h2>Disagreements found by review budget</h2></div></div><p class="muted small">Disagreements found with the dataset’s original labels.</p><div class="legend"><span><i class="teal-key"></i>Uncertainty queue</span><span><i class="gray-key"></i>Random · mean of 1,000 selections</span></div><div id="review-chart"></div><div class="table-wrap"><table id="review-table"></table></div><p class="tiny muted">P2.5–P97.5 describes variation between random selections of these same images. It is not an interval of clinical effectiveness. Review budgets are rounded up.</p></section>
+      <section class="panel"><h2 id="focus-title"></h2><div id="focus-summary"></div><div class="rule"></div><h3>How to read this comparison</h3><p class="small muted">This is a retrospective simulation: PBC labels are consulted after ranking. Your review progress does not change these metrics.</p><p class="small muted">Even a prediction with very concentrated scores can be wrong. This queue does not guarantee that every disagreement will be found.</p></section></div>
+      <section class="panel"><h2>Results by cell category</h2><div class="table-wrap"><table id="class-table"></table></div><p class="small" id="class-insight"></p><details><summary>Confusion matrix</summary><p class="tiny muted">Rows: reference label. Columns: prediction. The diagonal contains matches.</p><div class="table-wrap"><table id="confusion-table"></table></div></details></section>
+    </section>
+    <section id="view-method" class="view" aria-labelledby="method-heading" hidden>
+      <div class="page-heading"><h1 id="method-heading" tabindex="-1">Method and evaluation</h1></div>
+      <section class="panel purpose-panel"><h2>Experiment</h2><p>In PBC, labels are already known, so disagreements could be filtered directly. Here they are used to evaluate a ranking strategy for new images without labels, when only some can be reviewed. The queue uses model scores; references are consulted afterwards.</p>
+        <ol class="method-steps"><li><strong>Data.</strong> Original peripheral blood images from PBC, covering eight categories. Detected duplicate groups were kept together and conflicting labels excluded.</li><li><strong>Features.</strong> An ImageNet-pretrained ResNet18, kept frozen, produces 512 numerical features per image.</li><li><strong>Classifier.</strong> A scaler and logistic regression were fitted on training images only.</li><li><strong>Review priority.</strong> Normalized entropy of the eight scores, highest first. Each preset budget is compared with 1,000 random selections of the same size.</li></ol>
+        <p class="small" id="baseline-choice">Frozen ResNet18 features and logistic regression were chosen as a manageable CPU baseline, keeping feature extraction separate from classifier fitting. The aim was to test review prioritisation with a reproducible reference before considering a more complex model.</p>
+        <p class="small">The classifier was fitted on 10,246 training images. A separate set of 3,414 development validation images was used to assess the method before the final test. This demo shows only the 3,414 held-out test images, evaluated after fixing the method. Development results remain available in the <a href="./TECHNICAL_NOTE.md" target="_blank" rel="noopener">technical note</a> and <a href="./data/validation.json" target="_blank" rel="noopener">validation data</a>.</p>
+        <p class="small">The application displays saved predictions. It runs no inference or training and does not accept new images. Review marks stay in your browser and do not update labels or results.</p>
+      </section>
+      <section class="panel"><h2>Limitations</h2><ul class="limits"><li>One source, with specific sample preparation and image capture.</li><li>Patient identifiers are unavailable. Duplicate grouping does not establish patient-level separation.</li><li id="phase-limit">This final test is an internal evaluation; it does not establish generalization to another hospital.</li><li>Scores are uncalibrated: uncertainty is not the probability of an error.</li><li>A disagreement with a dataset label is not a confirmed diagnostic error.</li></ul><p class="small muted">No external-hospital, prospective or human reviewer study has been performed. Clinical benefit and time savings have not been measured. References are available in the downloaded data; hiding them on screen does not constitute a blinded study.</p></section>
+      <section class="panel provenance"><h2>Data and author</h2><p>CellReview is a research project by David Méndez Merino.</p><p>Images: Acevedo, Merino, Alférez, Molina, Boldú and Rodellar (2020), <a href="https://doi.org/10.17632/snkd93bnjr.1" target="_blank" rel="noopener noreferrer">PBC · Mendeley Data v1 · DOI 10.17632/snkd93bnjr.1</a>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Original JPEGs are redistributed unchanged; the interface scales them for viewing. Training preprocessing used resizing, a central crop and ImageNet normalization.</p><p>Feature extractor: <a href="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet" target="_blank" rel="noopener noreferrer">ResNet18 from ONNX Model Zoo</a>, pretrained on ImageNet. The saved experiment ran on a local CPU.</p>
+        <p class="small" id="science-access"><a href="./science/README.md" target="_blank" rel="noopener">Evaluation code and reproduction steps</a>: recalculate metrics and review comparisons from the saved predictions, without retraining.</p>
+        <details id="technical-details"><summary>Technical details and files</summary><dl id="method-facts"></dl><p>The browser checks data and original images against the SHA-256 manifest before displaying them. This detects changes relative to that manifest; it does not authenticate the publisher or establish scientific validity.</p><p>Progress is stored in this browser for these saved predictions. Review actions are not sent to a server. The application uses no external scripts, fonts or analytics.</p><p><a href="./TECHNICAL_NOTE.md" target="_blank" rel="noopener">Technical note</a> · <a href="./DATA_NOTICE.md" target="_blank" rel="noopener">Data notice</a> · <a href="./data/catalog.json" target="_blank" rel="noopener">Collection catalogue</a> · <a href="./data/final_test.json" target="_blank" rel="noopener">Final-test data</a> · <a href="./data/validation.json" target="_blank" rel="noopener">Development-validation data</a> · <a href="./manifest.json" target="_blank" rel="noopener">File integrity manifest</a></p><p class="tiny muted">Displayed numbers are rounded. The collection files retain the saved values.</p></details>
+      </section>
+    </section>
+  </main>
+  <footer class="footer"><span>CellReview <span class="muted">/</span> David Méndez Merino</span><span>PBC · Research prototype · No clinical validation</span></footer>
+  <div id="live" class="sr-only" aria-live="polite"></div><div id="storage-note" class="storage-note" role="status" hidden></div>
+</body></html>

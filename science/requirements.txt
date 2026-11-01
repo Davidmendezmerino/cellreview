@@ -1,0 +1,2 @@
+# Evaluation only; the frozen local experiment used this NumPy version.
+numpy==2.5.2
